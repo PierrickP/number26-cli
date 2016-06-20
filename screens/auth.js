@@ -82,7 +82,9 @@ module.exports = {
           form.destroy();
           n26.goTo('home');
         })
-        .catch(n26.log);
+        .catch((err) => {
+          n26.openModal('error', err, function () {});
+        });
     });
 
     username.focus();

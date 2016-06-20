@@ -15,7 +15,7 @@ const n26 = {
     require(`${__dirname}/screens/${screen}.js`).show(n26, details);
   },
   openModal(screen, details, cb) {
-    require(`${__dirname}/screens/${screen}.js`).show(n26, details, cb);
+    require(`${__dirname}/screens/${screen}.js`).show(n26, details, cb || function(){});
   },
   screen: blessed.screen({
     warnings: true,
