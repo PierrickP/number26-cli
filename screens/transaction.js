@@ -5,41 +5,70 @@ const utils = require('../lib/utils.js');
 
 var transactions = [];
 
-function renderContent(d) {
-  var s;
+/*
 
-  if (d.type === 'PT') {
-    s =
-`{bold}${d.merchantName}{/bold}{|}{red-fg}${d.amount} ${utils.currencyT(d.currencyCode)}{/red-fg}
-{bold}${utils.categoryT(d.category)}{/bold}
-${d.amount} ${utils.currencyT(d.currencyCode)}`;
-  } else if (d.type === 'CT') {
-    s =
-`{bold}${d.partnerName}{/bold}{|}{green-fg}${d.amount} ${utils.currencyT(d.currencyCode)}{/green-fg}
-{bold}${utils.categoryT(d.category)}{/bold}
-${moment(d.visibleTS).format('ddd MMM YYYY HH:mm')}
+  CARD_TRANSACTION_TYPES: ['AA', 'AV', 'AR', 'AE', 'AF', 'PT', 'PR', 'PF', 'DI'],
+  OTHER_TRANSACTION_TYPES: ['DT', 'DD', 'DR', 'FT', 'BBU', 'BUB', 'CT', 'WU', 'TUB'],
 
-{bold}iban{/bold} ${d.partnerIban}
-{bold}bic{/bold} ${d.partnerBic}
-{bold}ref{/bold} ${d.referenceText}`;
-  } else if (d.type === 'DT') {
-    s =
-`{bold}${d.partnerName}{/bold}{|}{red-fg}${d.amount} ${utils.currencyT(d.currencyCode)}{/red-fg}
-{bold}${utils.categoryT(d.category)}{/bold}
-${moment(d.visibleTS).format('ddd MMM YYYY HH:mm')}
+*/
 
-{bold}Message{/bold} ${d.referenceText}
-{bold}IBAN{/bold} ${d.partnerIban}`;
-  } else {
-    s = JSON.stringify(s, 2)
+function getAmount(amount, currency) {
+  return (amount > 0) ? `{green-fg}${amount} ${utils.currencyT(currency)}{/green-fg}` : `{red-fg}${amount} ${utils.currencyT(currency)}{/red-fg}`;
+}
+
+function getOriginalAmount(d) {
+  return `${trans.originalAmount || trans.externalAmount} ${trans.originalCurrency || trans.externalCurrencyCode} → ${trans.amount}`;
+}
+
+function estimateArrival(d) {
+  return `{bold}Reception Date:{/bold} ${moment(trans.externalReceiptTS).format('DD/MM/YYYY')}`;
+}
+
+function renderContent(trans) {
+  var s = `{bold}${trans.merchantName || trans.partnerName}{/bold}{|}${getAmount(trans.amount, trans.currencyCode)}`;
+
+  if (trans.externalReceiptTS) {
+    s += `\n${estimateArrival(trans)}`;
   }
 
-  return s; // JSON.stringify(d, 2)
+  if (trans.referenceText) {
+    s += `\n{bold}Reference:{/bold} ${trans.referenceText}`;
+  }
+
+  if (trans.originalCurrency && trans.originalCurrency != 'EUR' || trans.externalCurrencyCode) {
+    s += `\n${trans.getOriginalAmount()}`;
+  }
+
+  if (trans.partnerIban && ['WU', 'BBU', 'BUB', 'DI', 'TUB'].indexOf(trans.type) === -1) {
+    s += `\n${trans.partnerIban}`;
+
+    if (trans.partnerBic) {
+      s += ` ${trans.partnerBic}`;
+    }
+  }
+
+  if (trans.labels) {
+    s += `\n${trans.labels.map((label) => `${label.value} ${label.label}`).join(' | ')}`;
+  }
+
+  if (trans.memo) {
+    s += `\n${trans.memo}`
+  }
+
+  return s.trim();
+}
+
+function getCategory(category, categories) {
+  if (category) {
+    category = categories.find((c) => c.id === category);
+    if (category) {
+      return ` ${category.name} `;
+    }
+  }
 }
 
 module.exports = {
   show: function (n26, transaction, cb) {
-    n26.log(transaction)
     var background = blessed.box({
       parent: n26.screen,
       keys: true,
@@ -53,13 +82,13 @@ module.exports = {
 
     var details = blessed.box({
       parent: background,
-      label: '{bold}{cyan-fg} Transaction {/cyan-fg}{/bold}',
+      label: `{bold}{cyan-fg} Transaction{/cyan-fg}{/bold}${getCategory(transaction.category, n26.categories)}`,
       keys: true,
       tags: true,
       left: 'center',
       top: 'center',
       width: 40,
-      height: 20,
+      height: 'shrink',
       padding: {
         top: 1,
         right: 1,
@@ -68,6 +97,18 @@ module.exports = {
       },
       border: 'line',
       content: renderContent(transaction)
+    });
+
+    n26.screen.key('up', function() {
+      background.destroy();
+      n26.screen.render();
+      cb()
+    });
+
+    n26.screen.key('down', function() {
+      background.destroy();
+      n26.screen.render();
+      cb()
     });
 
     n26.screen.key('escape', function() {

@@ -6,7 +6,7 @@ const listGroup = require('../listGroup.js');
 
 const utils = require('../lib/utils.js');
 
-var transactions = [];
+var transactionsPerDay = [];
 
 function renderLine(t) {
   var amount = `${t.amount} ${utils.currencyT(t.currencyCode)}`;
@@ -16,7 +16,7 @@ function renderLine(t) {
 }
 
 function renderDayLine(day) {
-  return `\t{bold}${moment(day, 'DD/MM/YYYY').format('ddd MMM YY')}`;
+  return ` {bold}${moment(day, 'DD/MM/YYYY').format('ddd MMM YY')} `;
 }
 
 module.exports = {
@@ -63,9 +63,9 @@ module.exports = {
       }
     });
 
-    list.on('select', function (item, index) {
-      n26.openModal('transaction', transactions[index], function () {
-        list.focus();
+    list.on('select', function (item, index, list) {
+      n26.openModal('transaction', transactionsPerDay[list].transactions[index], function () {
+        // list.focus();
       });
     });
 
@@ -77,24 +77,22 @@ module.exports = {
           process.exit(1);
         }
 
-        transactions = trcts;
-
-        var transactionsPerDay = _.map(_.groupBy(transactions, function (t) {
+        transactionsPerDay = _.map(_.groupBy(trcts, function (t) {
           return moment(t.visibleTS).format('DD/MM/YY');
         }), function (v, k) {
           var day = {
             title: renderDayLine(k),
-            data: []
+            data: [],
+            transactions: []
           }
 
           v.forEach(function (t) {
             day.data.push(renderLine(t));
+            day.transactions.push(t);
           });
 
           return day;
         });
-
-        n26.log(require('util').inspect(transactionsPerDay, {depth: null}))
 
         list.setData(transactionsPerDay);
 

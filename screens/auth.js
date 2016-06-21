@@ -78,11 +78,16 @@ module.exports = {
       new Number26(data.email, data.password)
         .then((a) => {
           n26.account = a;
+        })
+        .then(() => n26.account.categories())
+        .then((categories) => {
+          n26.categories = categories;
 
           form.destroy();
           n26.goTo('home');
         })
         .catch((err) => {
+          n26.log(err);
           n26.openModal('error', err, function () {});
         });
     });
