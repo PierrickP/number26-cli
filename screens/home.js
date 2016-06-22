@@ -12,7 +12,7 @@ function renderLine(t) {
   var amount = `${t.amount} ${utils.currencyT(t.currencyCode)}`;
   amount = t.amount > 0 ? `{green-fg}${amount}{/green-fg}` : `{red-fg}${amount}{/red-fg}`;
 
-  return (['AA', 'AE', 'PT'].indexOf(t.type) !== -1) ? `${t.merchantName}{|}${amount}` : `${t.partnerName}{|}${amount}`
+  return (['AA', 'AE', 'PT'].indexOf(t.type) !== -1) ? `${utils.cat2emoji(t.category)}${t.merchantName}{|}${amount}` : `${t.partnerName}{|}${amount}`
 }
 
 function renderDayLine(day) {

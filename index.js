@@ -18,6 +18,7 @@ const n26 = {
     require(`${__dirname}/screens/${screen}.js`).show(n26, details, cb || function(){});
   },
   screen: blessed.screen({
+    fullUnicode: true,
     warnings: true,
     debug: true
   }),

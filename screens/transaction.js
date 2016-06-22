@@ -5,13 +5,6 @@ const utils = require('../lib/utils.js');
 
 var transactions = [];
 
-/*
-
-  CARD_TRANSACTION_TYPES: ['AA', 'AV', 'AR', 'AE', 'AF', 'PT', 'PR', 'PF', 'DI'],
-  OTHER_TRANSACTION_TYPES: ['DT', 'DD', 'DR', 'FT', 'BBU', 'BUB', 'CT', 'WU', 'TUB'],
-
-*/
-
 function getAmount(amount, currency) {
   return (amount > 0) ? `{green-fg}${amount} ${utils.currencyT(currency)}{/green-fg}` : `{red-fg}${amount} ${utils.currencyT(currency)}{/red-fg}`;
 }
@@ -67,6 +60,10 @@ function getCategory(category, categories) {
   }
 }
 
+function getLabel(n26, transaction) {
+  return `{bold}{cyan-fg} Transaction{/cyan-fg}{/bold}${getCategory(transaction.category, n26.categories)}`;
+}
+
 module.exports = {
   show: function (n26, transaction, cb) {
     var background = blessed.box({
@@ -82,7 +79,7 @@ module.exports = {
 
     var details = blessed.box({
       parent: background,
-      label: `{bold}{cyan-fg} Transaction{/cyan-fg}{/bold}${getCategory(transaction.category, n26.categories)}`,
+      label: getLabel(n26, transaction),
       keys: true,
       tags: true,
       left: 'center',
