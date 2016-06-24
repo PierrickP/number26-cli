@@ -59,6 +59,14 @@ module.exports = {
           callback: function () {
 
           }
+        },
+        'Stats': {
+          keys: ['s'],
+          callback: function () {
+            n26.openModal('stats', function () {
+              // list.focus();
+            });
+          }
         }
       }
     });
